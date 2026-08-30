@@ -1,7 +1,9 @@
-import re
-import sys
+import re, sys, os, subprocess
 from pathlib import Path
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Ajout du dossier src/ au path pour importer gridconnect
 sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
@@ -71,5 +73,38 @@ def capture_myores_session():
 
         browser.close()
 
+def deploy_to_remote_server():
+    enabled = os.getenv("REMOTE_SERVER_ENABLED", "false").lower() == "true"
+    if not enabled:
+        print("ℹ️ Déploiement distant désactivé dans le fichier .env")
+        return
+
+    session_file = Path("config/session.json")
+    if not session_file.exists():
+        print("❌ Impossible de déployer : config/session.json introuvable.")
+        return
+
+    user = os.getenv("REMOTE_SERVER_USER")
+    host = os.getenv("REMOTE_SERVER_HOST")
+    remote_path = os.getenv("REMOTE_SERVER_PATH")
+
+    if not all([user, host, remote_path]):
+        print("⚠️ Configuration serveur incomplète dans le fichier .env (REMOTE_SERVER_*)")
+        return
+
+    print(f"\n🚀 Transfert du token de session vers {user}@{host}:{remote_path}...")
+    
+    destination = f"{user}@{host}:{remote_path}"
+    cmd = ["scp", str(session_file), destination]
+
+    try:
+        result = subprocess.run(cmd, check=True, text=True, capture_output=True)
+        print("✅ Jeton de session déployé avec succès sur le serveur !")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Échec lors du transfert SCP : {e.stderr}")
+    except FileNotFoundError:
+        print("❌ Erreur : La commande 'scp' n'est pas installée sur cet ordinateur.")
+
 if __name__ == "__main__":
     capture_myores_session()
+    deploy_to_remote_server()

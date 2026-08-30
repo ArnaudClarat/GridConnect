@@ -55,6 +55,7 @@ Le projet transforme les séries temporelles brutes en objets métier Python typ
 - **Modèle de données typé :** Immutabilité des mesures et calcul automatique de la puissance équivalente (kW sur 15 min).
 - **Détection des anomalies :** Isolation des pointes physiquement irréalistes ou des erreurs d'acquisition pour éviter de fausser les analyses statistiques et tarifaires.
 - **Schéma PostgreSQL prêt à l'emploi :** Indexation sur `(timestamp, ean, register)` et contrainte d'unicité pour les rechargements idempotents.
+- **Authentification & Déploiement distant :** Capture de la session myORES via Playwright et transfert automatique optionnel du jeton (session.json) vers un serveur distant via SCP.
 
 ---
 
@@ -99,7 +100,7 @@ cp .env.example .env
 Le fichier `.env` permet de définir :
 - Les identifiants de connexion PostgreSQL.
 - Les identifiants de points de fourniture (EAN) anonymisés / configurés localement.
-- Les jetons / cookies de session requis pour les requêtes HTTP locales.
+- Les paramètres de déploiement SSH/SCP vers un serveur distant (REMOTE_SERVER_*) pour le transfert automatique de la session session.json.
 
 > ⚠️ **Sécurité :** Ne commitez **jamais** votre fichier `.env` ni aucun fichier contenant vos vraies données personnelles ou identifiants de session sur GitHub.
 
@@ -109,20 +110,23 @@ Le fichier `.env` permet de définir :
 
 ```text
 GridConnect/
-├── .env.example              # Modèle de configuration locale
-├── .gitignore                # Exclusion des secrets et de l'environnement virtuel
-├── README.md                 # Documentation du projet
-├── requirements.txt          # Dépendances Python
-├── config/                   # Fichiers de configuration
-├── scripts/                  # Scripts d'exécution et d'import
+├── .env.example               # Modèle de configuration locale
+├── .gitignore                 # Exclusion des secrets et des artefacts Python
+├── pyproject.toml             # Configuration du paquet Python (pip install -e .)
+├── README.md                  # Documentation du projet
+├── requirements.txt           # Dépendances Python
+├── config/                    # Fichiers de configuration et de session (session.json)
+├── scripts/                   # Scripts d'exécution
+│   ├── login.py               # Capture interactive et déploiement SSH de la session
+│   └── test_collector.py      # Test d'extraction et de collecte headless
 └── src/
-    └── gridconnect/          # Package Python principal
+    └── gridconnect/           # Package Python principal
         ├── __init__.py
-        ├── client.py         # Client d'extraction API / Réseau
-        ├── models.py         # Modèle métier (Measure, RegisterType)
-        ├── parsers.py        # Connecteurs de lecture (CSV, JSON)
-        ├── repository.py     # Couche d'accès aux données PostgreSQL
-        └── validation.py     # Moteur de contrôle et d'anomalies
+        ├── client.py          # Client d'extraction API / Réseau
+        ├── models.py          # Modèle métier (Measure, RegisterType)
+        └── auth/              # Module d'authentification et gestion de session
+            ├── __init__.py
+            └── session.py     # Modèle OresSession et SessionManager
 ```
 
 ---
