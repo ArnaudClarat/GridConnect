@@ -1,8 +1,14 @@
 # Environnement virtuel & Python
 .venv/
+venv/
 __pycache__/
 *.pyc
+*.egg-info/
+dist/
+build/
 
 # Données locales & Données sensibles
 *.csv
 .env
+config/
+*.json
