@@ -1,0 +1,8 @@
+# Environnement virtuel & Python
+.venv/
+__pycache__/
+*.pyc
+
+# Données locales & Données sensibles
+*.csv
+.env
