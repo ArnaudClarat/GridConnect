@@ -1,6 +1,8 @@
 import os, psycopg2
 from psycopg2.extras import execute_values
 from typing import List, Optional
+from datetime import datetime
+
 from gridconnect.models import Measure
 
 class DBStore:
@@ -22,6 +24,15 @@ class DBStore:
 
     def _get_connection(self):
         return psycopg2.connect(**self.db_config)
+
+    def get_last_timestamp(self) -> datetime | None:
+        """Retourne la date UTC de la dernière mesure enregistrée."""
+        query = "SELECT MAX(read_at) FROM measures;"
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(query)
+                result = cursor.fetchone()
+                return result[0] if result and result[0] else None
 
     def save_measures(self, measures: List[Measure]) -> int:
         """
