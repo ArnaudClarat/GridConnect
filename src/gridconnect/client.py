@@ -1,5 +1,6 @@
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import List, Dict, Any
 from gridconnect.models import Measure, RegisterType
 from gridconnect.auth.session import OresSession
@@ -33,6 +34,7 @@ class OresApiClient:
 
     def _parse_api_response(self, raw_json: Dict[str, Any]) -> List[Measure]:
         measures: List[Measure] = []
+        tz = ZoneInfo("Europe/Brussels")
 
         for series in raw_json.get("series", []):
             data = series.get("data", [])
@@ -51,14 +53,15 @@ class OresApiClient:
 
             for item in series.get("data", []):
                 val = item.get("value")
-                dt_str = item.get("date")
-                if val is None or not dt_str:
+                dt = datetime.fromisoformat(item.get("date"))
+                if val is None or not dt:
                     continue
 
-                dt = datetime.fromisoformat(dt_str)
+                dt_utc = dt.replace(tzinfo=dt.tzinfo or tz).astimezone(timezone.utc)
+
                 measures.append(
                     Measure(
-                        timestamp=dt,
+                        timestamp=dt_utc,
                         register=register,
                         volume_kwh=float(val),
                         interval_minutes=interval_minutes,
