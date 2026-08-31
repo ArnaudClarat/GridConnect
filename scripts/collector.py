@@ -9,9 +9,12 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 from gridconnect.auth.session import SessionManager
 from gridconnect.client import OresApiClient
 from gridconnect.db import DBStore
+from login import *
 
 
 def main():
+    capture_myores_session()
+
     # Charger la session depuis config/session.json
     session_manager = SessionManager(session_filepath="config/session.json")
     session = session_manager.load_session()
