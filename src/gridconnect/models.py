@@ -1,7 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, replace
 
 
 class RegisterType(str, Enum):
@@ -15,25 +14,18 @@ class RegisterType(str, Enum):
 
 @dataclass(frozen=True)
 class Measure:
-    ean: str
     timestamp: datetime
     register: RegisterType
-    value_kwh: float
-    is_anomaly: bool = False
-    anomaly_reason: Optional[str] = None
+    volume_kwh: float
+    interval_minutes: int = 15
+    is_valid: bool = True
 
     @property
     def power_kw(self) -> float:
-        """Calcule la puissance moyenne équivalente sur l'intervalle 15-min."""
-        return self.value_kwh * 4.0
+        """Calcule la puissance moyenne équivalente sur l'intervalle."""
+        return round(self.volume_kwh / (self.interval_minutes / 60.0), 3) if self.interval_minutes > 0 else 0.0
 
-    def mark_as_anomaly(self, reason: str) -> "Measure":
-        """Retourne une nouvelle instance de Measure marquée comme anomalie."""
-        return Measure(
-            ean=self.ean,
-            timestamp=self.timestamp,
-            register=self.register,
-            value_kwh=self.value_kwh,
-            is_anomaly=True,
-            anomaly_reason=reason
-        )
+    def check_validity(self) -> "Measure":
+        """Invalide la mesure si négative ou physiquement impossible."""
+        valid = 0.0 <= self.power_kw <= 30.0
+        return self if self.is_valid == valid else replace(self, is_valid=valid)
