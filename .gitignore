@@ -12,3 +12,5 @@ build/
 .env
 config/
 *.json
+SQL/
+*.dump
