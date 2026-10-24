@@ -9,7 +9,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 from gridconnect.auth.session import SessionManager
 from gridconnect.client import OresApiClient
 from gridconnect.db import DBStore
-from login import *
 
 
 def main():
@@ -19,7 +18,8 @@ def main():
 
     if not session:
         print("Aucune session trouvée dans 'config/session.json'.")
-        session = capture_myores_session(session_manager)
+        print("Veuillez d'abord exécuter 'python scripts/login.py' pour vous authentifier.")
+        sys.exit(1)
 
     print(f"🔑 Session chargée avec succès (site_id: {session.site_id}, source_id: {session.source_id})")
 

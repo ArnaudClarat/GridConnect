@@ -23,22 +23,17 @@ Le projet transforme les séries temporelles brutes en objets métier Python typ
                │
                ▼
    ┌───────────────────────┐
-   │  GridConnect Client   │  <-- Extrait les métriques brutes
+   │     OresApiClient     │  <-- Extrait les métriques brutes
    └───────────────────────┘
                │
                ▼
    ┌───────────────────────┐
-   │   Measure (Modèle)    │  <-- Conversion en objets métier typés
+   │        Measure        │  <-- Conversion en objets métier typés et détection des anomalies / valeurs aberrantes
    └───────────────────────┘
                │
                ▼
    ┌───────────────────────┐
-   │  MeasureValidator     │  <-- Détection des anomalies / valeurs aberrantes
-   └───────────────────────┘
-               │
-               ▼
-   ┌───────────────────────┐
-   │ PostgreSQL Repository │  <-- Stockage prospectif & idempotent
+   │        DBStore        │  <-- Stockage prospectif & idempotent
    └───────────────────────┘
                │
                ▼
@@ -50,11 +45,9 @@ Le projet transforme les séries temporelles brutes en objets métier Python typ
 ---
 
 ## 🚀 Fonctionnalités principales
-
-- **Parsing multi-sources :** Support des exports CSV historiques et des appels d'API HTTP internes.
 - **Modèle de données typé :** Immutabilité des mesures et calcul automatique de la puissance équivalente (kW sur 15 min).
 - **Détection des anomalies :** Isolation des pointes physiquement irréalistes ou des erreurs d'acquisition pour éviter de fausser les analyses statistiques et tarifaires.
-- **Schéma PostgreSQL prêt à l'emploi :** Indexation sur `(timestamp, ean, register)` et contrainte d'unicité pour les rechargements idempotents.
+- **Schéma PostgreSQL prêt à l'emploi :** Indexation sur `(read_at, register)` et contrainte d'unicité pour les rechargements idempotents.
 - **Authentification & Déploiement distant :** Capture de la session myORES via Playwright et transfert automatique optionnel du jeton (session.json) vers un serveur distant via SCP.
 
 ---
@@ -64,14 +57,14 @@ Le projet transforme les séries temporelles brutes en objets métier Python typ
 ### Prérequis
 
 - Python 3.10+
-- PostgreSQL 13+
+- PostgreSQL 13+ & TimescaleDB
 - Grafana (optionnel, pour la visualisation)
 
 ### Installation
 
 1. Cloner le dépôt :
    ```bash
-   git clone https://github.com/votre-utilisateur/GridConnect.git
+   git clone https://github.com/ArnaudClarat/GridConnect.git
    cd GridConnect
    ```
 
@@ -118,11 +111,12 @@ GridConnect/
 ├── config/                    # Fichiers de configuration et de session (session.json)
 ├── scripts/                   # Scripts d'exécution
 │   ├── login.py               # Capture interactive et déploiement SSH de la session
-│   └── test_collector.py      # Test d'extraction et de collecte headless
+│   └── collector.py           # Test d'extraction et de collecte headless
 └── src/
     └── gridconnect/           # Package Python principal
         ├── __init__.py
         ├── client.py          # Client d'extraction API / Réseau
+        ├── db.py              # Enregistrement dans TimescaleDB
         ├── models.py          # Modèle métier (Measure, RegisterType)
         └── auth/              # Module d'authentification et gestion de session
             ├── __init__.py
@@ -133,4 +127,7 @@ GridConnect/
 
 ## 📜 Licence
 
-Ce projet est sous licence MIT. Libre à vous de le réutiliser, de l'adapter et de contribuer !
+Ce projet est sous licence **CC BY‑NC 4.0** (Attribution – NonCommercial).
+
+Vous pouvez utiliser, copier, modifier et partager ce projet librement pour un usage personnel ou non commercial.  
+Toute utilisation commerciale, y compris l’intégration dans un produit ou service payant, est interdite sans mon accord explicite.
