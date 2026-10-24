@@ -13,16 +13,13 @@ from login import *
 
 
 def main():
-    capture_myores_session()
-
     # Charger la session depuis config/session.json
     session_manager = SessionManager(session_filepath="config/session.json")
     session = session_manager.load_session()
 
     if not session:
         print("Aucune session trouvée dans 'config/session.json'.")
-        print("Veuillez d'abord exécuter 'python scripts/login.py' pour vous authentifier.")
-        sys.exit(1)
+        session = capture_myores_session(session_manager)
 
     print(f"🔑 Session chargée avec succès (site_id: {session.site_id}, source_id: {session.source_id})")
 

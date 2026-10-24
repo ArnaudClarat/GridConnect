@@ -22,7 +22,7 @@ class OresApiClient:
         
         payload = {
             "chartId": "CONSO_HILO",
-            "granularityId": "HOUR",
+            "granularityId": "HOUR", # 'HOUR' pour récuperer une granularité à 15min
             "from": start_date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
             "to": end_date.strftime("%Y-%m-%dT%H:%M:%S.999Z"),
         }

@@ -12,8 +12,7 @@ from playwright.sync_api import sync_playwright
 from gridconnect.auth.session import SessionManager, OresSession
 
 
-def capture_myores_session():
-    session_manager = SessionManager(session_filepath="config/session.json")
+def capture_myores_session(session_manager: SessionManager) -> OresSession:
     
     found_site_id = None
     found_source_id = None
@@ -46,14 +45,21 @@ def capture_myores_session():
         print("⏳ Attente de la détection du cookie de session 'ores-prod-auth'...\n")
 
         # Boucle d'attente jusqu'à détection du cookie après connexion
-        auth_cookie_value = None
-        while not auth_cookie_value:
-            cookies = context.cookies()
-            for cookie in cookies:
-                if cookie["name"] == "ores-prod-auth":
-                    auth_cookie_value = cookie["value"]
-                    break
+        auth_cookie = None
+        while not auth_cookie:
+            auth_cookie = next(
+                (c for c in context.cookies() if c["name"] == "ores-prod-auth"), None
+            )
             page.wait_for_timeout(1000)
+
+        auth_cookie_value = auth_cookie["value"]
+
+        # Diagnostic: print cookie attributes (never the value itself)
+        exp = auth_cookie["expires"]  # Unix timestamp, or -1 for a session cookie
+        print("Cookie domain  :", auth_cookie["domain"])
+        print("Cookie expires :", "session cookie (no fixed expiry)" if exp == -1
+              else datetime.fromtimestamp(exp).isoformat())
+        print("httpOnly/secure:", auth_cookie["httpOnly"], auth_cookie["secure"])
 
         print("✅ Cookie 'ores-prod-auth' capturé avec succès !")
 
@@ -70,12 +76,13 @@ def capture_myores_session():
 
         session_manager.save_session(session)
         print(f"💾 Session enregistrée dans '{session_manager.session_filepath}'")
-
+        deploy_to_remote_server()
         browser.close()
+        return session
 
 def deploy_to_remote_server():
-    enabled = os.getenv("REMOTE_SERVER_ENABLED", "false").lower() == "true"
-    if not enabled:
+    disabled = os.getenv("REMOTE_SERVER_ENABLED", "false").lower() != "true"
+    if disabled:
         print("ℹ️ Déploiement distant désactivé dans le fichier .env")
         return
 
@@ -106,5 +113,6 @@ def deploy_to_remote_server():
         print("❌ Erreur : La commande 'scp' n'est pas installée sur cet ordinateur.")
 
 if __name__ == "__main__":
-    capture_myores_session()
+    session_manager = SessionManager(session_filepath="config/session.json")
+    capture_myores_session(session_manager)
     deploy_to_remote_server()
