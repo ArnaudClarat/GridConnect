@@ -54,15 +54,6 @@ def capture_myores_session(session_manager: SessionManager) -> OresSession:
 
         auth_cookie_value = auth_cookie["value"]
 
-        # Diagnostic: print cookie attributes (never the value itself)
-        exp = auth_cookie["expires"]  # Unix timestamp, or -1 for a session cookie
-        print("Cookie domain  :", auth_cookie["domain"])
-        print("Cookie expires :", "session cookie (no fixed expiry)" if exp == -1
-              else datetime.fromtimestamp(exp).isoformat())
-        print("httpOnly/secure:", auth_cookie["httpOnly"], auth_cookie["secure"])
-
-        print("✅ Cookie 'ores-prod-auth' capturé avec succès !")
-
         # Attente de 3 secondes supplémentaires pour s'assurer que les requêtes d'API réseau capturent site/source
         page.wait_for_timeout(3000)
 

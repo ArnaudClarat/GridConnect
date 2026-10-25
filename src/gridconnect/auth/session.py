@@ -49,4 +49,5 @@ class SessionManager:
                 data = json.load(f)
                 return OresSession.from_dict(data)
         except (json.JSONDecodeError, KeyError):
+            print(f"Erreur lors de la récupération de la session : {e}")
             return None

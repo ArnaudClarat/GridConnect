@@ -77,10 +77,16 @@ Le projet transforme les séries temporelles brutes en objets métier Python typ
 
 3. Installer les dépendances :
    ```bash
-   pip install -r requirements.txt
+      pip install -r requirements.txt          # suffisant pour collector.py
+   pip install -r requirements-login.txt    # à ajouter pour login.py
+   playwright install chromium              # à ajouter pour login.py
    ```
 
 ---
+
+## Utilisation
+- `scripts/login.py` : Ouvre le navigateur et invite l'utilisateur à se connecter sur MyOres. Le jeton est enregistré dans config/session.json.
+- `scripts/collector.py` : Récupère les nouvelles mesures et les enregistre en base.
 
 ## ⚙️ Configuration
 
@@ -108,6 +114,7 @@ GridConnect/
 ├── pyproject.toml             # Configuration du paquet Python (pip install -e .)
 ├── README.md                  # Documentation du projet
 ├── requirements.txt           # Dépendances Python
+├── requirements-login.txt     # Dépendances supplémentaires pour login.py
 ├── config/                    # Fichiers de configuration et de session (session.json)
 ├── scripts/                   # Scripts d'exécution
 │   ├── login.py               # Capture interactive et déploiement SSH de la session
