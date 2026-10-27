@@ -43,6 +43,7 @@ class SessionManager:
     def load_session(self) -> Optional[OresSession]:
         """Charge la session courante si le fichier existe."""
         if not self.session_filepath.exists():
+            print(f"{session_filepaths} does not exists or is not readable : {e}")
             return None
         try:
             with open(self.session_filepath, "r", encoding="utf-8") as f:

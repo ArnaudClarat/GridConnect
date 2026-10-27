@@ -66,6 +66,7 @@ def main():
 
     except Exception as e:
         print(f"Erreur lors de la récupération des données : {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
