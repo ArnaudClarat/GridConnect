@@ -13,6 +13,7 @@ Le projet transforme les séries temporelles brutes en objets métier Python typ
 - **Idempotence & Intégrité :** Ingestion sans doublons, conservation de l'historique brut et marquage explicite des valeurs aberrantes sans altération des données sources.
 - **Compatibilité Grafana :** Schéma PostgreSQL optimisé pour la visualisation des séries temporelles (consommation, production, puissance calculée).
 - **Conception Générique :** Architecture modulaire réutilisable pour différents points de fourniture (EAN) et plusieurs registres (heures pleines / heures creuses, injection / prélèvement).
+- **Déploiement conteneurisé & résilient :** Exécution continue en arrière-plan via un démon Docker permanent sur serveur Linux, garantissant une collecte automatisée et autonome.
 
 ---
 
@@ -49,6 +50,7 @@ Le projet transforme les séries temporelles brutes en objets métier Python typ
 - **Détection des anomalies :** Isolation des pointes physiquement irréalistes ou des erreurs d'acquisition pour éviter de fausser les analyses statistiques et tarifaires.
 - **Schéma PostgreSQL prêt à l'emploi :** Indexation sur `(read_at, register)` et contrainte d'unicité pour les rechargements idempotents.
 - **Authentification & Déploiement distant :** Capture de la session myORES via Playwright et transfert automatique optionnel du jeton (session.json) vers un serveur distant via SCP.
+- **Démon de surveillance asynchrone :** Service Docker léger qui surveille l'actualisation du jeton de session pour lancer la collecte à la demande sans solliciter inutilement l'API.
 
 ---
 
@@ -84,9 +86,12 @@ Le projet transforme les séries temporelles brutes en objets métier Python typ
 
 ---
 
-## Utilisation
-- `scripts/login.py` : Ouvre le navigateur et invite l'utilisateur à se connecter sur MyOres. Le jeton est enregistré dans config/session.json.
-- `scripts/collector.py` : Récupère les nouvelles mesures et les enregistre en base.
+## ⚙️ Utilisation & Déploiement
+
+- **`scripts/login.py` :** Ouvre le navigateur sur ton PC local, gère l'authentification itsme et enregistre le jeton dans `config/session.json`.
+- **`scripts/collector.py` :** Script unitaire de récupération des mesures et d'enregistrement en base.
+- **`scripts/daemon.py` :** Démon permanent exécuté dans un conteneur Docker sur le serveur, qui surveille en continu la modification du fichier de session pour déclencher la collecte automatiquement.
+
 
 ## ⚙️ Configuration
 
@@ -100,8 +105,31 @@ Le fichier `.env` permet de définir :
 - Les identifiants de connexion PostgreSQL.
 - Les identifiants de points de fourniture (EAN) anonymisés / configurés localement.
 - Les paramètres de déploiement SSH/SCP vers un serveur distant (REMOTE_SERVER_*) pour le transfert automatique de la session session.json.
+- `DAEMON_CHECK_INTERVAL` : L'intervalle de temps (en secondes) séparant chaque vérification du fichier de session par le démon (ex: `3660`).
 
 > ⚠️ **Sécurité :** Ne commitez **jamais** votre fichier `.env` ni aucun fichier contenant vos vraies données personnelles ou identifiants de session sur GitHub.
+
+---
+
+## 🐳 Conteneurisation (Docker)
+
+Le projet intègre un `Dockerfile` optimisé (basé sur Python 3.13 slim) ainsi qu'un `.dockerignore` configuré pour exclure les fichiers locaux et runtimes superflus du contexte de build.
+
+Pour lancer le service de collecte en arrière-plan sur ton serveur :
+
+```bash
+# 1. Construire l'image
+docker build -t gridconnect-collector .
+
+# 2. Lancer le conteneur persistant
+docker run -d \
+  --name gridconnect-collector \
+  --restart unless-stopped \
+  --env-file .env \
+  -v $(pwd)/config:/app/config \
+  -v $(pwd)/logs:/app/logs \
+  gridconnect-collector
+```
 
 ---
 
@@ -109,8 +137,10 @@ Le fichier `.env` permet de définir :
 
 ```text
 GridConnect/
+├── .dockerignore              # Exclusion des fichiers locaux et runtimes du contexte Docker
 ├── .env.example               # Modèle de configuration locale
 ├── .gitignore                 # Exclusion des secrets et des artefacts Python
+├── Dockerfile                 # Configuration de l'image de conteneurisation du démon
 ├── pyproject.toml             # Configuration du paquet Python (pip install -e .)
 ├── README.md                  # Documentation du projet
 ├── requirements.txt           # Dépendances Python
@@ -118,7 +148,8 @@ GridConnect/
 ├── config/                    # Fichiers de configuration et de session (session.json)
 ├── scripts/                   # Scripts d'exécution
 │   ├── login.py               # Capture interactive et déploiement SSH de la session
-│   └── collector.py           # Test d'extraction et de collecte headless
+│   ├── collector.py           # Test d'extraction et de collecte headless
+│   └── daemon.py              # Démon de surveillance permanent (Docker)
 └── src/
     └── gridconnect/           # Package Python principal
         ├── __init__.py

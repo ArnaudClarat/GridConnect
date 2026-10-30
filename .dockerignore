@@ -1,0 +1,28 @@
+# Environnements virtuels
+.venv/
+venv/
+ENV/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Git et configuration locale
+.git/
+.gitignore
+.env
+
+# Logs et dossiers temporaires
+logs/
+*.log
+
+# Fichiers de session (gérés dynamiquement via le volume)
+config/session.json
+
+# Documentation et fichiers Docker eux-mêmes
+README.md
+Dockerfile
+docker-compose.yml
